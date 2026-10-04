@@ -1,0 +1,163 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>CHRONOS — متحف الزمن</title>
+<style>
+:root{--a:#e6b34a;--b:#2a1c0c;--p:#8b5cf6;--t:#f6f1e6;--m:#a79f90;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--b);color:var(--t);font:15px "Segoe UI",Tahoma,system-ui,sans-serif;overflow:hidden;transition:background-color 1s}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}.ov{position:fixed;inset:0;background:radial-gradient(900px 600px at 20% 10%,#8b5cf633,transparent),radial-gradient(700px 500px at 90% 90%,#e6b34a1a,transparent);pointer-events:none}
+#app{position:relative;display:flex;flex-direction:column;height:100%}
+header{display:flex;gap:10px;align-items:center;padding:8px 14px;flex-wrap:wrap;border-bottom:1px solid #ffffff1a;background:#0006;backdrop-filter:blur(8px)}
+header h1{margin:0;font-size:18px;letter-spacing:5px;color:var(--a)}#yl{font-size:20px;font-weight:700;color:var(--a);min-width:110px}#en{font-size:12px;color:var(--m)}
+#sw{position:relative;flex:1;min-width:160px}input,button,select{background:#ffffff10;color:var(--t);border:1px solid #ffffff2a;border-radius:10px;padding:7px 11px;font:inherit}button{cursor:pointer}button:hover,button.on{border-color:var(--a);color:var(--a)}
+#sw input{width:100%}#sr{position:absolute;top:110%;inset-inline:0;background:#14101cf2;border:1px solid #ffffff2a;border-radius:10px;max-height:60vh;overflow:auto;display:none;z-index:15}
+.it{display:flex;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid #ffffff12;cursor:pointer}.it:hover{background:#ffffff0d}.it small{color:var(--m);margin-inline-start:auto}
+.tabs{display:flex;gap:6px;padding:8px 14px;flex-wrap:wrap}main{flex:1;overflow:auto;padding:0 14px 8px}
+.card{background:#ffffff0b;border:1px solid #ffffff1f;border-radius:14px;padding:12px;margin-bottom:10px;backdrop-filter:blur(6px);animation:in .5s}@keyframes in{from{opacity:0;transform:translateY(8px)}}
+#mp{width:100%;height:min(46vh,420px);border-radius:14px;border:1px solid #ffffff1f;background:#0005;cursor:pointer;display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+footer{padding:6px 14px 10px;background:#0007;border-top:1px solid #ffffff1a}#tp{width:100%;height:78px;touch-action:none;cursor:ew-resize;display:block}
+#dw{position:fixed;top:0;bottom:0;inset-inline-start:0;width:min(440px,100%);background:#120e1cf5;border-inline-end:1px solid var(--a);padding:16px;overflow:auto;transform:translateX(-110%);transition:transform .45s cubic-bezier(.2,.8,.2,1);z-index:20}
+[dir=rtl] #dw{inset-inline-start:auto;inset-inline-end:0;transform:translateX(110%);border-inline-end:0;border-inline-start:1px solid var(--a)}#dw.o{transform:none!important}
+.ch{display:inline-block;margin:3px;padding:4px 10px;border:1px solid #ffffff33;border-radius:20px;cursor:pointer;font-size:13px}.ch:hover{border-color:var(--a);color:var(--a)}
+.st{border-inline-start:2px solid var(--a);padding:2px 12px;margin:8px 0}.st b{color:var(--a);display:block;font-size:13px}.tg{color:var(--m);font-size:12px}
+.bar{height:8px;background:#ffffff1a;border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--p),var(--a));transition:width .6s}
+.wr{background:#7f1d1d55;border:1px solid #ef444477;padding:8px 12px;border-radius:10px;margin-bottom:10px}
+#intro{position:fixed;inset:0;z-index:50;background:#06040cf5;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;transition:opacity 1.2s}
+#intro h2{font-size:clamp(26px,6vw,56px);margin:10px;font-weight:600;line-height:1.5}#intro .big{font-size:clamp(18px,3vw,26px);color:var(--a)}#intro button{font-size:20px;letter-spacing:4px;padding:14px 34px;background:var(--p);border-color:var(--p);color:#fff;margin-top:26px}
+@media(max-width:640px){header h1{display:none}}
+</style></head><body>
+<canvas id="fx"></canvas><div class="ov"></div>
+<div id="intro"><div class="big">أنت على بُعد 4,000 سنة من هنا.</div><h2>التاريخ ليس شيئًا تقرأه…<br>إنه شيء تستكشفه.</h2><button id="go">ENTER CHRONOS</button></div>
+<div id="app"><header><h1>CHRONOS</h1><div><div id="yl"></div><div id="en"></div></div><div id="sw"><input id="q" placeholder="ابحث: «الحروب بين 500 و1000» أو «مصر»…" autocomplete="off"><div id="sr"></div></div><div id="ex" style="min-width:150px;cursor:pointer" data-a="prog"></div><button id="snd" data-a="snd" title="صوت النقر">🔔</button></header>
+<div class="tabs" id="tabs"></div><main id="main"></main><footer><canvas id="tp"></canvas></footer></div>
+<aside id="dw"></aside>
+<script>
+(()=>{'use strict';
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fy=y=>y<0?Math.round(-y).toLocaleString('ar-EG')+' ق.م':Math.max(1,Math.round(y)).toLocaleString('ar-EG')+' م';
+/* ===== data: c=civilization e=event p=person | links are bidirectional ===== */
+const D=[
+['egy','c','مصر القديمة',-3100,-30,'حضارة نهرية على النيل، وُحّدت تقليديًا نحو 3100 ق.م. بنت الأهرام وطوّرت الهيروغليفية، وانتهت بضمّ روما لها عام 30 ق.م.','unif pyr cleod ros khu rams cleo'],
+['sum','c','بلاد الرافدين (سومر)',-3500,-2000,'مدن مثل أوروك وأور؛ ومنها خرجت الكتابة المسمارية نحو 3400 ق.م.','cune'],
+['ind','c','حضارة وادي السند',-2600,-1900,'مدن مخططة مثل موهنجو دارو وهارابا بشبكات صرف متقدمة. كتابتها لم تُفكّ بعد.',''],
+['chi','c','الصين الإمبراطورية',-1600,1912,'من أسرة شانغ إلى سقوط أسرة تشينغ عام 1912؛ وُحّدت سياسيًا عام 221 ق.م.','qin qsh'],
+['gre','c','اليونان القديمة',-800,-146,'مدن-دول مثل أثينا وإسبرطة؛ منها الفلسفة والمسرح والديمقراطية الأثينية.','mara alex phil alexd'],
+['per','c','الإمبراطورية الأخمينية (فارس)',-550,-330,'أوسع إمبراطورية في عصرها؛ أسقطها الإسكندر.','mara gaug pers dar'],
+['rom','c','روما',-753,476,'من مدينة إلى جمهورية فإمبراطورية؛ سقط غربها عام 476م.','cleod fall caes cleo'],
+['byz','c','الإمبراطورية البيزنطية',330,1453,'امتداد روما الشرقية وعاصمتها القسطنطينية.','fall cons mehm'],
+['isl','c','الخلافات الإسلامية',632,1258,'امتدت من الأندلس إلى آسيا الوسطى؛ ازدهرت فيها العلوم والترجمة في بغداد.','bag'],
+['mon','c','الإمبراطورية المغولية',1206,1368,'أكبر إمبراطورية برية متصلة في التاريخ، أسسها جنكيز خان.','bag gen'],
+['ott','c','الدولة العثمانية',1299,1922,'حكمت أجزاء من أوروبا وآسيا وأفريقيا قرابة ستة قرون.','cons mehm'],
+['maya','c','المايا الكلاسيكية',250,900,'مدن حجرية وتقويم دقيق وكتابة هيروغليفية في أمريكا الوسطى.',''],
+['cune','e','ظهور الكتابة المسمارية',-3400,-3400,'ظهرت في أوروك لتسجيل المحاصيل والمخازن.|الحاجة إلى إدارة الفائض والتجارة.|تطورت لتكتب لغات متعددة وبقيت آلاف السنين.','sum'],
+['unif','e','توحيد مصر',-3100,-3100,'يُنسب تقليديًا إلى الملك نعرمر (مينا) توحيد الصعيد والدلتا. التواريخ تقريبية.|رغبة في السيطرة على النيل وتجارته.|قامت دولة مركزية استمرت قرونًا.','egy'],
+['pyr','e','بناء الهرم الأكبر',-2560,-2560,'بُني في الجيزة للملك خوفو نحو 2560 ق.م.|ترسيخ سلطة الملك الإلهية وتنظيم عمالة ضخمة.|ظل أعلى بناء صنعه الإنسان قرابة 3800 عام.','egy khu'],
+['qin','e','توحيد الصين على يد تشين',-221,-221,'أنهت دولة تشين عصر الممالك المتحاربة ووحّدت الصين.|حروب طويلة وإصلاحات عسكرية وإدارية.|وُحّدت الكتابة والمقاييس.','chi qsh'],
+['mara','e','معركة ماراثون',-490,-490,'انتصر الأثينيون على الجيش الفارسي.|حملة الأخمينيين بعد دعم أثينا لثورة إيونيا.|عززت ثقة اليونانيين قبل الحروب اللاحقة.','gre per'],
+['gaug','e','معركة جوجميلا',-331,-331,'هزم الإسكندر جيش داريوس الثالث.|طموح الإسكندر لإسقاط الأخمينيين.|انفتح الطريق إلى بابل وسوسة وبرسيبوليس.','alex dar per'],
+['pers','e','إحراق برسيبوليس',-330,-330,'احترق قصر برسيبوليس أثناء وجود الإسكندر.|الأسباب موضع جدل بين المؤرخين: انتقام متعمد أم حادث.|رُمز به إلى نهاية الإمبراطورية الأخمينية.','alex per'],
+['alexd','e','وفاة الإسكندر',-323,-323,'مات في بابل وعمره نحو 32 عامًا؛ وسبب الوفاة غير محسوم.|مرض مفاجئ بعد حملات طويلة.|تقاسم قادته إمبراطوريته (الديادوخي).','alex gre'],
+['cleod','e','ضمّ مصر إلى روما',-30,-30,'بعد وفاة كليوباترا السابعة صارت مصر ولاية رومانية.|هزيمة أنطونيو وكليوباترا في أكتيوم عام 31 ق.م.|أصبحت مصر مخزن الحبوب لروما.','cleo egy rom'],
+['fall','e','سقوط روما الغربية',476,476,'عُزل آخر أباطرة الغرب على يد أودواكر.|ضغوط عسكرية واقتصادية وسياسية متراكمة.|بقي الشرق البيزنطي قرابة ألف عام.','rom byz'],
+['bag','e','سقوط بغداد',1258,1258,'استولى المغول بقيادة هولاكو على بغداد.|اتساع الحملات المغولية غربًا.|انتهت الخلافة العباسية في بغداد وتضررت مؤسساتها العلمية.','mon isl'],
+['gut','e','المطبعة المتحركة في أوروبا',1450,1450,'طوّر غوتنبرغ الطباعة بالحروف المعدنية المتحركة نحو 1450.|الطلب المتزايد على الكتب.|تسارع انتشار المعرفة والتعليم.','gutn'],
+['cons','e','فتح القسطنطينية',1453,1453,'فتح السلطان محمد الثاني القسطنطينية بعد حصار.|استخدام مدافع ضخمة وإصرار على الفتح.|انتهت الدولة البيزنطية وصارت المدينة عاصمة عثمانية.','mehm byz ott'],
+['col','e','رحلة كولومبوس',1492,1492,'وصل كولومبوس إلى جزر الكاريبي.|البحث عن طريق بحري إلى آسيا.|بدأ اتصال دائم بين نصفي الأرض، بآثار هائلة ومؤلمة على السكان الأصليين.',''],
+['ros','e','اكتشاف حجر رشيد',1799,1799,'عثر جنود حملة نابليون على الحجر قرب رشيد.|أعمال تحصين في الدلتا.|فكّ شامبليون الهيروغليفية عام 1822 معتمدًا عليه.','egy'],
+['moon','e','الهبوط على القمر',1969,1969,'هبطت مركبة أبولو 11 ونزل نيل أرمسترونغ وباز ألدرين.|سباق الفضاء بين القوتين العظميين.|أول مرة يمشي فيها إنسان على جرم آخر.',''],
+['alex','p','الإسكندر الأكبر',-356,-323,'ملك مقدونيا؛ قاد حملة أسقطت الأخمينيين ووصل إلى الهند.','phil dar gre per egy gaug pers alexd'],
+['phil','p','فيليب الثاني',-382,-336,'ملك مقدونيا ووالد الإسكندر؛ وسّع نفوذه على معظم اليونان.','alex gre'],
+['dar','p','داريوس الثالث',-380,-330,'آخر ملوك الإمبراطورية الأخمينية.','alex per gaug'],
+['cleo','p','كليوباترا السابعة',-69,-30,'آخر ملكات الأسرة البطلمية في مصر.','egy rom caes cleod'],
+['caes','p','يوليوس قيصر',-100,-44,'قائد وسياسي روماني؛ اغتيل عام 44 ق.م.','rom cleo'],
+['qsh','p','تشين شي هوانغ',-259,-210,'أول إمبراطور للصين الموحدة.','chi qin'],
+['rams','p','رمسيس الثاني',-1303,-1213,'من أطول ملوك مصر حكمًا، نحو 66 عامًا.','egy'],
+['khu','p','خوفو',-2589,-2566,'ملك مصري من الأسرة الرابعة صاحب الهرم الأكبر (تواريخ حكمه تقريبية).','egy pyr'],
+['gen','p','جنكيز خان',1162,1227,'مؤسس الإمبراطورية المغولية (تاريخ ميلاده تقريبي).','mon'],
+['mehm','p','محمد الثاني (الفاتح)',1432,1481,'سلطان عثماني فتح القسطنطينية وعمره 21 عامًا.','ott cons byz'],
+['gutn','p','يوهانس غوتنبرغ',1400,1468,'صانع طباعة ألماني (تاريخ ميلاده تقريبي).','gut']];
+const CL={egy:[31,27],sum:[45,32],ind:[68,27],chi:[110,34],gre:[22,39],per:[53,32],rom:[12,42],byz:[29,41],isl:[44,33],mon:[100,47],ott:[34,39],maya:[-89,17]};
+const EN=new Map(),AJ=new Map();D.forEach(d=>EN.set(d[0],{id:d[0],t:d[1],n:d[2],y:d[3],y2:d[4],x:d[5],l:d[6]}));
+for(const e of EN.values())for(const k of e.l.split(' ').filter(Boolean))if(EN.has(k)){(AJ.get(e.id)||AJ.set(e.id,new Set()).get(e.id)).add(k);(AJ.get(k)||AJ.set(k,new Set()).get(k)).add(e.id)}
+const TI={c:'🏛️',e:'📜',p:'👤'},TN={c:'حضارة',e:'حدث',p:'شخصية'};
+/* ===== state ===== */
+let Y=2026,P=0,ES=new Set(),ERA=new Set(),TAB='map',snd=false;try{const s=JSON.parse(localStorage.getItem('chronos')||'{}');ES=new Set(s.e||[]);ERA=new Set(s.r||[])}catch(e){}
+const persist=()=>{try{localStorage.setItem('chronos',JSON.stringify({e:[...ES],r:[...ERA]}))}catch(e){}};
+const ERAS=[[-1200,'فجر الحضارات','#e6b34a','#2a1c0c'],[500,'العالم الكلاسيكي','#e0934a','#2b1410'],[1500,'العصور الوسطى','#b79cff','#1c1230'],[1900,'العصر الحديث المبكر','#d8b56a','#1a1620'],[2026.5,'العصر المعاصر','#a78bfa','#0f0b1a'],[1e9,'المستقبل — تخيّلي','#4fd1e8','#06141f']];
+const eraI=y=>ERAS.findIndex(e=>y<e[0]);
+const AN=[[-3500,0],[-500,.28],[1,.5],[1500,.78],[2026,.94],[2200,1]];
+function y2p(y){for(let i=1;i<AN.length;i++)if(y<=AN[i][0]||i==AN.length-1){const[a,b]=[AN[i-1],AN[i]];return Math.min(1,Math.max(0,a[1]+(y-a[0])/(b[0]-a[0])*(b[1]-a[1])))}}
+function p2y(p){for(let i=1;i<AN.length;i++)if(p<=AN[i][1]||i==AN.length-1){const[a,b]=[AN[i-1],AN[i]];return a[0]+(Math.min(1,Math.max(0,p))-a[1])/(b[1]-a[1])*(b[0]-a[0])}}
+/* ===== soft click sound (optional) ===== */
+const AU={c:null,on:true,init(){try{if(!this.c)this.c=new(window.AudioContext||window.webkitAudioContext)()}catch(e){this.c=null}},
+ click(){if(!this.on)return;this.init();const c=this.c;if(!c)return;try{if(c.state=='suspended')c.resume();const t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.setValueAtTime(660,t);o.frequency.exponentialRampToValueAtTime(440,t+.08);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.05,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+.12);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+.13)}catch(e){}}};
+try{AU.on=localStorage.getItem('chronos-snd')!=='0'}catch(e){}
+/* ===== time ===== */
+let lastEra=-1;
+function setYear(y,keepP){Y=Math.max(-3500,Math.min(2200,y));if(!keepP)P=y2p(Y);const i=eraI(Y),e=ERAS[i];document.documentElement.style.setProperty('--a',e[2]);document.documentElement.style.setProperty('--b',e[3]);document.body.style.backgroundColor=e[3];
+ $('#yl').textContent=fy(Y);$('#en').textContent=e[1]+' · '+(Y<=2026?'قبل '+(2026-Math.round(Y)).toLocaleString('ar-EG')+' سنة':'بعد '+(Math.round(Y)-2026).toLocaleString('ar-EG')+' سنة');if(i!==lastEra){lastEra=i;ERA.add(i);persist()}
+ view();drawTape();meter()}
+/* ===== views ===== */
+const nearby=()=>{const o=[];for(const e of EN.values()){const d=e.t=='e'?Math.abs(e.y-Y):(Y>=e.y&&Y<=e.y2?0:Math.min(Math.abs(e.y-Y),Math.abs(e.y2-Y)));if(e.t=='e'?d<=250:d<=0||e.t=='p'&&d<=40)o.push([d,e])}return o.sort((a,b)=>a[0]-b[0]).slice(0,10).map(x=>x[1])};
+const row=e=>`<div class="it" data-a="o:${e.id}">${TI[e.t]} <b>${esc(e.n)}</b><small>${fy(e.y)}</small></div>`;
+const MY=[{n:'لغز ١',c:['🗺️ مدينة تقع بين بحرين وقارتين.','📜 سورها المزدوج صمد قرونًا أمام الحصارات.','👤 قاد الهجوم سلطان عمره 21 عامًا.','📅 ربيع عام 1453.','⚔️ مدافع ضخمة قصفت الأسوار.'],o:['سقوط روما الغربية','فتح القسطنطينية','سقوط بغداد','إحراق برسيبوليس'],a:1,id:'cons'},
+ {n:'لغز ٢',c:['🗺️ مدينة على فرع النيل قرب البحر المتوسط.','📜 نص واحد بثلاث كتابات: هيروغليفية وديموطيقية ويونانية.','👤 جنود حملة فرنسية يعملون في التحصين.','📅 عام 1799.','⚔️ لم تكن معركة؛ كانت لحظة اكتشاف.'],o:['اكتشاف حجر رشيد','بناء الهرم الأكبر','ظهور الكتابة المسمارية','رحلة كولومبوس'],a:0,id:'ros'},
+ {n:'لغز ٣',c:['🗺️ سهل شمال بلاد الرافدين.','📜 تذكر المصادر القديمة جيشًا فارسيًا أكبر بكثير.','👤 ملك فارسي غادر ساحة المعركة.','📅 عام 331 ق.م.','⚔️ جيش مقدوني أصغر ينتصر.'],o:['معركة ماراثون','معركة جوجميلا','وفاة الإسكندر','توحيد الصين'],a:1,id:'gaug'}];
+let mi=0,mc=1,mdone=false;
+const WI=[{id:'alexd',q:'ماذا لو عاش الإسكندر عقودًا أخرى؟',o:['كان قد يوطّد إدارة إمبراطوريته ويخلف وريثًا قويًا، فتتأخر الانقسامات.','وربما استمرت الحروب وأرهقت الجيش، فتنقسم بعده كما حدث فعلًا.','وربما اتجه غربًا نحو قرطاج وروما وتغيّر توازن المتوسط.']},
+ {id:'cons',q:'ماذا لو صمدت القسطنطينية عام 1453؟',o:['ربما بقيت دولة بيزنطية ضعيفة محاصرة أعوامًا أخرى.','وربما اتجهت الدولة العثمانية إلى جبهات أخرى بتركيز أكبر.','وربما تغيّرت مسارات التجارة، لكن البحث عن طرق بحرية كان قد بدأ أصلًا.']},
+ {id:'gut',q:'ماذا لو لم تُخترع المطبعة المتحركة؟',o:['كان انتشار الكتب سيبقى أبطأ وأغلى.','وربما ظهر اختراع مشابه لاحقًا؛ فالطباعة بالحروف المتحركة عُرفت في شرق آسيا قبل ذلك.','وربما تأخرت حركات الإصلاح والعلم الحديث نسبيًا.']}];
+const FU={2050:'سيناريو: توسّع الطاقة المتجددة والمدن الذكية، مع ضغط مناخي ومائي في مناطق عدة، وتحوّل في أنماط العمل بفعل الأتمتة.',2100:'سيناريو: مسارات متباينة: عالم يبطئ الاحترار بتعاون دولي، أو آخر يواجه ارتفاعًا حادًا في مستوى البحار. وتتوقع إسقاطات الأمم المتحدة بلوغ ذروة سكانية قبل نهاية القرن.',2200:'خيال محض: ربما مستوطنات خارج الأرض أو مجتمعات متكيفة مع مناخ مختلف؛ لا أحد يعرف.'};
+function view(){const m=$('#main');if(TAB!=='map')return;const n=nearby();const h=`<canvas id="mp"></canvas><div class="tg" style="margin:6px 0">خريطة مبسّطة تقريبية — اضغط على حضارة لفتحها. الحضارات المضيئة كانت قائمة في ${fy(Y)}.</div><div class="grid">${n.map(row).join('')||'<div class="card tg">لا أحداث قريبة من هذه السنة — اسحب الزمن.</div>'}</div>${Y>2026?'<div class="wr">⚠ ما بعد 2026 سيناريوهات تخيلية وليست توقعات مؤكدة.</div>':''}`;if(!m._k||m._k!=='map'){m.innerHTML=h;m._k='map';mapInit()}else{m.querySelector('.grid').innerHTML=n.map(row).join('')}}
+function tab(k){TAB=k;const m=$('#main');m._k=null;$('#tabs').innerHTML=[['map','🌍 العالم'],['my','🧩 لغز'],['wi','🧠 ماذا لو؟'],['fu','🚀 المستقبل']].map(t=>`<button class="${t[0]==k?'on':''}" data-a="t:${t[0]}">${t[1]}</button>`).join('');
+ if(k=='map')view();else if(k=='my'){const q=MY[mi];m.innerHTML=`<div class="card"><b>${q.n}</b> — ما الحدث؟<div style="margin:8px 0">${q.c.slice(0,mc).map(c=>`<div class="st">${c}</div>`).join('')}</div>${mc<5&&!mdone?'<button data-a="clue">كشف دليل ('+mc+'/5)</button>':''}<div style="margin-top:10px">${q.o.map((o,i)=>`<button data-a="ans:${i}" style="margin:3px">${esc(o)}</button>`).join('')}</div><div id="mr"></div><div style="margin-top:8px"><button data-a="nm">لغز آخر ↻</button></div></div>`}
+ else if(k=='wi')m.innerHTML=WI.map((w,i)=>`<div class="card"><div class="wr">⚠ سيناريو خيالي وليس تاريخًا مؤكدًا</div><b>${w.q}</b><div class="st"><b>الحدث الأصلي</b>${esc(EN.get(w.id).n)} (${fy(EN.get(w.id).y)})</div>${w.o.map((o,j)=>`<div class="st"><b>احتمال ${j+1}</b>${esc(o)}</div>`).join('')}<button data-a="o:${w.id}">افتح الحدث</button></div>`).join('');
+ else m.innerHTML=`<div class="wr">⚠ هذا ليس توقعًا مؤكدًا: سيناريوهات تخيلية مبنية على اتجاهات وافتراضات.</div>${Object.keys(FU).map(y=>`<div class="card"><button data-a="jy:${y}">${fy(+y)}</button><p>${FU[y]}</p></div>`).join('')}`}
+/* ===== entity drawer + connection engine ===== */
+function open(id){const e=EN.get(id);if(!e)return;ES.add(id);persist();meter();const nb=[...(AJ.get(id)||[])].map(i=>EN.get(i)),chips=a=>a.map(x=>`<span class="ch" data-a="o:${x.id}">${TI[x.t]} ${esc(x.n)}</span>`).join('')||'<span class="tg">—</span>';let h=`<div style="display:flex"><b style="font-size:20px;color:var(--a);flex:1">${TI[e.t]} ${esc(e.n)}</b><button data-a="x">✕</button></div><div class="tg">${TN[e.t]} · ${e.y==e.y2?fy(e.y):fy(e.y)+' → '+fy(e.y2)}</div>`;
+ if(e.t=='e'){const[w,y,a]=e.x.split('|'),pre=nb.filter(x=>x.t=='e'&&x.y<e.y);h+=`<div class="st"><b>① ماذا حدث؟</b>${esc(w)}</div><div class="st"><b>② من شارك؟</b>${chips(nb.filter(x=>x.t!='e'))}</div><div class="st"><b>③ لماذا حدث؟</b>${esc(y)}</div><div class="st"><b>④ ماذا تغيّر بعده؟</b>${esc(a)}</div><div class="st"><b>⑤ ما الذي أدى إليه؟</b>${pre.length?chips(pre):'<span class="tg">لا حدث سابق مسجّل هنا</span>'}</div><button data-a="jy:${e.y+10}">⏭ ماذا حدث بعد 10 سنوات؟</button> `}else h+=`<p>${esc(e.x)}</p>`;
+ h+=`<button data-a="jy:${e.y}">⏳ انتقل إلى ${fy(e.y)}</button><h4>🔗 الروابط</h4>${svgNet(e,nb)}<div>${chips(nb)}</div>`;$('#dw').innerHTML=h;$('#dw').classList.add('o')}
+function svgNet(e,nb){const n=nb.slice(0,10),r=82;return`<svg viewBox="0 0 320 230" style="width:100%"><g stroke="var(--a)" stroke-opacity=".4">${n.map((x,i)=>{const a=i/n.length*6.283;return`<line x1="160" y1="115" x2="${160+Math.cos(a)*r*1.5}" y2="${115+Math.sin(a)*r}"/>`}).join('')}</g>${n.map((x,i)=>{const a=i/n.length*6.283,X=160+Math.cos(a)*r*1.5,Z=115+Math.sin(a)*r;return`<g data-a="o:${x.id}" style="cursor:pointer"><circle cx="${X}" cy="${Z}" r="9" fill="${x.t=='e'?'#8b5cf6':x.t=='p'?'#e6b34a':'#4fd1e8'}"/><text x="${X}" y="${Z+22}" font-size="10" fill="#f6f1e6" text-anchor="middle">${esc(x.n.slice(0,12))}</text></g>`}).join('')}<circle cx="160" cy="115" r="14" fill="var(--a)"/></svg>`}
+/* ===== search (text + year ranges + graph) ===== */
+function parseN(s){return s.replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c))}
+function search(q){q=parseN(q.trim().toLowerCase());if(!q)return[];const nums=[...q.matchAll(/(\d{1,4})\s*(ق\.?\s*م|bc)?/g)].map(m=>m[2]?-+m[1]:+m[1]);let r=[];
+ if(nums.length>=2){const[a,b]=[Math.min(nums[0],nums[1]),Math.max(nums[0],nums[1])],words=q.replace(/[\d\s]|ق\.?\s*م|bc|بين|و|من|إلى|الى/g,'');r=[...EN.values()].filter(e=>e.y>=a&&e.y<=b&&(!/حرب|معرك/.test(q)||/معرك|سقوط|فتح|حرب/.test(e.n))).sort((x,y)=>x.y-y.y)}
+ else{const ex=[...EN.values()].find(e=>e.n.toLowerCase().includes(q));r=[...EN.values()].filter(e=>(e.n+e.x).toLowerCase().includes(q));if(ex)for(const i of AJ.get(ex.id)||[])if(!r.includes(EN.get(i)))r.push(EN.get(i))}return r.slice(0,25)}
+/* ===== map ===== */
+const CO={eu:[[-10,36],[-9,43],[0,50],[8,54],[10,59],[30,70],[60,70],[100,77],[140,72],[180,68],[170,60],[140,52],[130,42],[122,30],[110,20],[105,10],[100,2],[95,16],[80,10],[73,20],[58,25],[48,30],[35,30],[28,36],[10,40],[-5,36]],af:[[-17,21],[-6,36],[10,37],[32,31],[43,12],[51,12],[40,-15],[32,-28],[20,-35],[12,-17],[9,4],[-8,5],[-17,14]],na:[[-168,66],[-140,70],[-95,72],[-60,60],[-55,48],[-80,25],[-97,18],[-85,10],[-105,20],[-125,40],[-135,58]],sa:[[-80,10],[-60,10],[-35,-7],[-48,-25],[-65,-55],[-75,-45],[-72,-20],[-80,-3]],au:[[114,-22],[130,-12],[142,-11],[153,-27],[146,-39],[132,-33],[115,-34]]};
+const AL={};let mapOn=false;
+function mapInit(){const c=$('#mp');if(!c)return;c.onclick=ev=>{const r=c.getBoundingClientRect(),x=(ev.clientX-r.left)/r.width*c.width,y=(ev.clientY-r.top)/r.height*c.height;let b=null,bd=26;for(const k in CL){const[px,py]=mxy(c,CL[k]),d=Math.hypot(px-x,py-y);if(d<bd){bd=d;b=k}}if(b)open(b)}}
+const mxy=(c,[lo,la])=>[(lo+180)/360*c.width,(80-la)/140*c.height];
+function mapDraw(t){const c=$('#mp');if(!c||TAB!=='map')return;const w=c.width=c.clientWidth*devicePixelRatio,h=c.height=c.clientHeight*devicePixelRatio,x=c.getContext('2d'),a=getComputedStyle(document.documentElement).getPropertyValue('--a').trim()||'#e6b34a';x.strokeStyle='#ffffff10';for(let i=-180;i<=180;i+=30){const[px]=mxy(c,[i,0]);x.beginPath();x.moveTo(px,0);x.lineTo(px,h);x.stroke()}for(let j=-60;j<=80;j+=20){const[,py]=mxy(c,[0,j]);x.beginPath();x.moveTo(0,py);x.lineTo(w,py);x.stroke()}
+ x.fillStyle='#ffffff14';x.strokeStyle='#ffffff30';for(const k in CO){x.beginPath();CO[k].forEach((p,i)=>{const[px,py]=mxy(c,p);i?x.lineTo(px,py):x.moveTo(px,py)});x.closePath();x.fill();x.stroke()}
+ x.font=12*devicePixelRatio+'px sans-serif';x.textAlign='center';for(const k in CL){const e=EN.get(k),on=Y>=e.y&&Y<=e.y2;AL[k]=(AL[k]||0)+((on?1:0)-(AL[k]||0))*.12;const al=AL[k];if(al<.03)continue;const[px,py]=mxy(c,CL[k]),r=(10+3*Math.sin(t/400+px))*devicePixelRatio;x.globalAlpha=al;const g=x.createRadialGradient(px,py,0,px,py,r*2.4);g.addColorStop(0,a);g.addColorStop(1,'transparent');x.fillStyle=g;x.beginPath();x.arc(px,py,r*2.4,0,7);x.fill();x.fillStyle='#fff';x.fillText(e.n.slice(0,16),px,py-r*1.6);x.globalAlpha=1}}
+/* ===== tape (time travel) ===== */
+const tp=$('#tp');let drag=false;
+function drawTape(){const w=tp.width=tp.clientWidth*devicePixelRatio,h=tp.height=tp.clientHeight*devicePixelRatio,x=tp.getContext('2d'),d=devicePixelRatio,a=getComputedStyle(document.documentElement).getPropertyValue('--a').trim()||'#e6b34a',X=p=>w-(p*(w-30*d)+15*d);
+ const g=x.createLinearGradient(w,0,0,0);ERAS.forEach((e,i)=>g.addColorStop(Math.min(1,y2p(i?ERAS[i-1][0]:-3500)),e[2]));x.fillStyle=g;x.fillRect(0,h*.5-2*d,w,4*d);x.font=11*d+'px sans-serif';x.textAlign='center';x.fillStyle='#a79f90';
+ for(const[y]of AN.slice(0,-1).concat([[2200]]))if(y!=2200||1){const px=X(y2p(y));x.fillRect(px,h*.5-6*d,1,12*d);x.fillText(fy(y),px,h*.5+22*d)}
+ for(const e of EN.values())if(e.t=='e'){x.fillStyle=ES.has(e.id)?a:'#ffffff80';x.beginPath();x.arc(X(y2p(e.y)),h*.5-14*d,3*d,0,7);x.fill()}
+ const px=X(P);x.fillStyle=a;x.fillRect(px-1.5*d,6*d,3*d,h-12*d);x.beginPath();x.arc(px,h*.5,7*d,0,7);x.fill()}
+function tapeSet(ev){const r=tp.getBoundingClientRect(),p=1-Math.min(1,Math.max(0,(ev.clientX-r.left-15)/(r.width-30)));P=p;setYear(p2y(p),true)}
+tp.onpointerdown=ev=>{drag=true;tp.setPointerCapture(ev.pointerId);tapeSet(ev)};tp.onpointermove=ev=>{if(drag)tapeSet(ev)};tp.onpointerup=()=>drag=false;
+tp.onwheel=ev=>{ev.preventDefault();P=Math.min(1,Math.max(0,P+(ev.deltaY>0?.006:-.006)));setYear(p2y(P),true)};
+addEventListener('keydown',e=>{if(e.target.tagName=='INPUT')return;if(e.key=='ArrowLeft'){P=Math.min(1,P+.005);setYear(p2y(P),true)}if(e.key=='ArrowRight'){P=Math.max(0,P-.005);setYear(p2y(P),true)}if(e.key=='Escape')$('#dw').classList.remove('o')});
+function tween(to,ms){const f=Y,t0=performance.now();(function s(n){const k=Math.min(1,(n-t0)/ms),e=1-Math.pow(1-k,3);setYear(f+(to-f)*e);if(k<1)requestAnimationFrame(s)})(t0)}
+/* ===== progression ===== */
+function meter(){const tot=EN.size,n=ES.size,pc=Math.round(n/tot*100),lv=pc<25?'زائر':pc<50?'مستكشف':pc<80?'مؤرّخ':'سيّد الزمن';$('#ex').innerHTML=`<div class="tg">TIME EXPLORER · ${lv}</div><div class="bar"><i style="width:${pc}%"></i></div><div class="tg">${pc}%</div>`}
+const cnt=t=>[...ES].filter(i=>EN.get(i)&&EN.get(i).t==t).length;
+/* ===== actions ===== */
+const ACT={o:id=>open(id),x(){$('#dw').classList.remove('o')},t:k=>tab(k),jy(y){$('#dw').classList.remove('o');tab('map');tween(+y,1400)},clue(){if(mc<5){mc++;tab('my')}},nm(){mi=(mi+1)%MY.length;mc=1;mdone=false;tab('my')},
+ ans(i){const q=MY[mi],r=$('#mr');if(+i==q.a){mdone=true;mc=5;ES.add(q.id);persist();meter();r.innerHTML=`<div class="card" style="border-color:#22c55e">✔ صحيح! ${esc(EN.get(q.id).n)} — <span class="ch" data-a="o:${q.id}">افتح الحدث</span></div>`}else r.innerHTML='<div class="wr">ليس بعد… اكشف دليلًا آخر وحاول ثانية.</div>'},
+ snd(){AU.on=!AU.on;try{localStorage.setItem('chronos-snd',AU.on?'1':'0')}catch(e){}$('#snd').textContent=AU.on?'🔔':'🔕';if(AU.on)AU.click()},
+ prog(){$('#dw').innerHTML=`<div style="display:flex"><b style="font-size:20px;color:var(--a);flex:1">TIME EXPLORER</b><button data-a="x">✕</button></div><div class="bar" style="margin:10px 0"><i style="width:${Math.round(ES.size/EN.size*100)}%"></i></div><p>استكشفت:<br>📜 ${cnt('e')} / ${[...EN.values()].filter(e=>e.t=='e').length} حدث<br>👤 ${cnt('p')} / ${[...EN.values()].filter(e=>e.t=='p').length} شخصية<br>🏛️ ${cnt('c')} / ${[...EN.values()].filter(e=>e.t=='c').length} حضارة<br>🕰️ ${ERA.size} / ${ERAS.length} عصور</p>`;$('#dw').classList.add('o')}};
+document.addEventListener('click',e=>{if(e.target.closest('button,.ch,.it,[data-a]'))AU.click();const a=e.target.closest('[data-a]');if(a){const[f,...p]=a.dataset.a.split(':');try{ACT[f]&&ACT[f](p.join(':'))}catch(x){console.error(x)}$('#sr').style.display='none'}else if(!e.target.closest('#sw'))$('#sr').style.display='none'});
+let st;$('#q').oninput=e=>{clearTimeout(st);st=setTimeout(()=>{const r=search(e.target.value),s=$('#sr');s.innerHTML=r.map(row).join('')||'<div class="it tg">لا نتائج</div>';s.style.display=e.target.value.trim()?'block':'none'},120)};
+$('#q').onkeydown=e=>{if(e.key=='Enter'){const r=search(e.target.value);if(r.length&&r.every(x=>x.t=='e')&&r.length>1)tween(r[0].y,1200);else if(r[0])open(r[0].id);$('#sr').style.display='none'}};
+/* ===== particles ===== */
+const fx=$('#fx'),fc=fx.getContext('2d'),PT=Array.from({length:50},()=>({x:Math.random(),y:Math.random(),v:.0002+Math.random()*.0004,r:Math.random()*1.6+.4})),RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+(function loop(t){requestAnimationFrame(loop);fx.width=innerWidth;fx.height=innerHeight;if(!RM){fc.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--a').trim()||'#e6b34a';fc.globalAlpha=.35;for(const p of PT){p.y-=p.v;if(p.y<0)p.y=1;fc.beginPath();fc.arc(p.x*fx.width,p.y*fx.height,p.r,0,7);fc.fill()}}try{mapDraw(t)}catch(e){}})(0);
+addEventListener('resize',()=>{drawTape()});
+/* ===== boot ===== */
+$('#go').onclick=()=>{$('#intro').style.opacity=0;setTimeout(()=>$('#intro').remove(),1300);tween(-2000,3200)};
+$('#snd').textContent=AU.on?'🔔':'🔕';tab('map');setYear(2026);
+})();
+</script></body></html>
